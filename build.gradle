@@ -2,14 +2,25 @@ repositories { mavenCentral() }
 configurations { ivy }
 dependencies { ivy 'org.apache.ivy:ivy:2.2.0' }
 
+class ConvertIvyToPomTask extends DefaultTask {
+  def ivy
+  def pom
+
+  @TaskAction
+  void convertIvyFilesToPomFiles() {
+    ant.taskdef uri: 'ivy',
+                resource: 'org/apache/ivy/ant/antlib.xml',
+                classpath: project.configurations.ivy.asPath
+
+    logger.info 'Converting metadata descriptors...'
+    ant.'ivy:convertpom' pomFile: pom, ivyFile: ivy
+  }
+}
+
 def hibernatePom = 'sample-metadata/hibernate-core-4.3.5.Final.pom.xml'
 def hibernateIvy = 'sample-metadata/hibernate.ivy.xml'
 
-ant {
-  taskdef uri: 'ivy', resource: 'org/apache/ivy/ant/antlib.xml', classpath: configurations.ivy.asPath
-}
-
-task convertPom << {
-  logger.info 'Converting metadata descriptors...'
-  ant.'ivy:convertpom' pomFile: hibernatePom, ivyFile: hibernateIvy
+task convert(type: ConvertIvyToPomTask) {
+  ivy = hibernateIvy
+  pom = hibernatePom
 }
